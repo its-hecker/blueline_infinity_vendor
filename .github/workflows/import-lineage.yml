@@ -1,0 +1,33 @@
+name: Import Pixel 3 Android 17 vendor
+on:
+  push:
+    paths:
+      - '.github/workflows/import-lineage.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import Pixel 3 proprietary files with Git LFS
+        shell: bash
+        run: |
+          set -euo pipefail
+          if test -f blueline-vendor.mk; then
+            echo "Vendor source is already imported; refusing to overwrite."
+            exit 0
+          fi
+          git lfs install --local
+          git remote add source https://github.com/its-hecker/proprietary_vendor_google_blueline.git
+          git fetch --no-tags --depth=1 source +refs/heads/lineage-24.0:refs/remotes/source/lineage-24.0
+          GIT_LFS_SKIP_SMUDGE=1 git checkout FETCH_HEAD -- .
+          git lfs fetch source refs/remotes/source/lineage-24.0
+          git lfs checkout
+          git add -A
+          git config user.name "Hecker"
+          git config user.email "noreply@github.com"
+          git commit -m "Import Android 17 Pixel 3 proprietary blobs"
+          git lfs push origin HEAD
+          git push origin HEAD:main
